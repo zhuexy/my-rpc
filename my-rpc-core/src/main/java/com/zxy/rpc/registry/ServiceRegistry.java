@@ -14,4 +14,9 @@ public interface ServiceRegistry {
      * @param address        服务地址(ip, port)
      */
     void register(String rpcServiceName, InetSocketAddress address);
+
+    /**
+     * 清空服务
+     */
+    void clearAll();
 }

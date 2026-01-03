@@ -24,4 +24,13 @@ public class IPUtils {
         return new InetSocketAddress(host, port);
     }
 
+    // 将InetSocketAddress转换成ip:port
+    public static String toStringAddress(InetSocketAddress address) {
+        if (address == null) {
+            throw new IllegalArgumentException("address is null");
+        }
+        return address.getAddress().getHostAddress() + StrUtil.COLON + address.getPort();
+    }
+
+
 }
