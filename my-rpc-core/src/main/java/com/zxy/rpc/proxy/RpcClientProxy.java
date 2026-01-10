@@ -1,6 +1,7 @@
 package com.zxy.rpc.proxy;
 
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.zxy.rpc.config.RpcServiceConfig;
 import com.zxy.rpc.dto.RpcReq;
 import com.zxy.rpc.dto.RpcResp;
@@ -69,7 +70,11 @@ public class RpcClientProxy implements InvocationHandler {
         RpcResp<?> resp = rpcClient.send(rpcReq);
 
         check(rpcReq, resp);
-        return resp.getData();
+        Object data = resp.getData();
+        if (data instanceof JSONObject) {
+            return ((JSONObject) data).toJavaObject(method.getReturnType());
+        }
+        return data;
     }
 
     private void check(RpcReq rpcReq, RpcResp<?> rpcResp) {

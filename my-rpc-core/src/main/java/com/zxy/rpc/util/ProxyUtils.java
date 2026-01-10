@@ -3,7 +3,7 @@ package com.zxy.rpc.util;
 import com.zxy.rpc.factory.SingletonFactory;
 import com.zxy.rpc.proxy.RpcClientProxy;
 import com.zxy.rpc.tansmission.RpcClient;
-import com.zxy.rpc.tansmission.socket.SocketRpcClient;
+import com.zxy.rpc.tansmission.netty.NettyRpcClient;
 
 /**
  * @author zxy
@@ -11,7 +11,7 @@ import com.zxy.rpc.tansmission.socket.SocketRpcClient;
  **/
 public class ProxyUtils {
 
-    private static final RpcClient RPC_CLIENT = SingletonFactory.getInstance(SocketRpcClient.class);
+    private static final RpcClient RPC_CLIENT = SingletonFactory.getInstance(NettyRpcClient.class);
 
     private static final RpcClientProxy PRC_CLIENT_PROXY = new RpcClientProxy(RPC_CLIENT);
 
