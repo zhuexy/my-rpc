@@ -1,6 +1,6 @@
 package com.zxy.rpc.tansmission.netty.handler;
 
-import com.alibaba.fastjson2.JSON;
+import com.zxy.rpc.dto.RpcMsg;
 import com.zxy.rpc.dto.RpcResp;
 import com.zxy.rpc.tansmission.netty.NettyRpcClient;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,11 +12,11 @@ import lombok.extern.slf4j.Slf4j;
  * @date 2026/1/10 19:53
  **/
 @Slf4j
-public class NettyRpcClientHandler extends SimpleChannelInboundHandler<String> {
+public class NettyRpcClientHandler extends SimpleChannelInboundHandler<RpcMsg> {
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String rpcRespStr) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, RpcMsg rpcMsg) throws Exception {
         // 处理接收到的响应
-        RpcResp<?> rpcResp = JSON.parseObject(rpcRespStr, RpcResp.class);
+        RpcResp<?> rpcResp = (RpcResp<?>) rpcMsg.getData();
         log.info("Received RPC response: {}", rpcResp);
         // 将响应传递给等待的请求线程
         NettyRpcClient.UnprocessedRpcReq.complete(rpcResp);

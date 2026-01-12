@@ -5,14 +5,15 @@ import com.zxy.rpc.factory.SingletonFactory;
 import com.zxy.rpc.provider.ServiceProvider;
 import com.zxy.rpc.provider.impl.ZkServiceProvider;
 import com.zxy.rpc.tansmission.RpcServer;
+import com.zxy.rpc.tansmission.netty.codec.NettyRpcDecoder;
+import com.zxy.rpc.tansmission.netty.codec.NettyRpcEncoder;
 import com.zxy.rpc.tansmission.netty.handler.NettyRpcServerHandler;
+import com.zxy.rpc.util.ShutdownHookUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 import lombok.AllArgsConstructor;
 
 /**
@@ -34,6 +35,7 @@ public class NettyRpcServer implements RpcServer {
 
     @Override
     public void start() {
+        ShutdownHookUtils.clearAll();
         ServerBootstrap serverBootstrap = new ServerBootstrap()
                 .group(new NioEventLoopGroup(), new NioEventLoopGroup())
                 .channel(NioServerSocketChannel.class)
@@ -41,8 +43,8 @@ public class NettyRpcServer implements RpcServer {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         // 添加处理器
-                        socketChannel.pipeline().addLast(new StringDecoder());
-                        socketChannel.pipeline().addLast(new StringEncoder());
+                        socketChannel.pipeline().addLast(new NettyRpcDecoder());
+                        socketChannel.pipeline().addLast(new NettyRpcEncoder());
                         socketChannel.pipeline().addLast(new NettyRpcServerHandler(serviceProvider));
                     }
                 });

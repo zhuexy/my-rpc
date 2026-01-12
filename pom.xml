@@ -29,6 +29,7 @@
         <junit.version>4.13.2</junit.version>
         <curator.version>4.2.0</curator.version>
         <fastjson.version>2.0.53</fastjson.version>
+        <kryo.version>4.0.2</kryo.version>
     </properties>
 
     <dependencies>
@@ -99,6 +100,12 @@
                 <groupId>com.alibaba.fastjson2</groupId>
                 <artifactId>fastjson2</artifactId>
                 <version>${fastjson.version}</version>
+            </dependency>
+            <!-- kryo，序列化 -->
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kryo.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

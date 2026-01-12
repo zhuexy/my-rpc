@@ -1,13 +1,19 @@
 package com.zxy.rpc.tansmission.netty;
 
-import com.alibaba.fastjson2.JSON;
+import com.zxy.rpc.dto.RpcMsg;
 import com.zxy.rpc.dto.RpcReq;
 import com.zxy.rpc.dto.RpcResp;
+import com.zxy.rpc.enums.CompressType;
+import com.zxy.rpc.enums.MsgType;
+import com.zxy.rpc.enums.SerializerType;
+import com.zxy.rpc.enums.VersionType;
 import com.zxy.rpc.exception.RpcException;
 import com.zxy.rpc.factory.SingletonFactory;
 import com.zxy.rpc.registry.ServiceDiscovery;
 import com.zxy.rpc.registry.impl.ZkServiceDiscovery;
 import com.zxy.rpc.tansmission.RpcClient;
+import com.zxy.rpc.tansmission.netty.codec.NettyRpcDecoder;
+import com.zxy.rpc.tansmission.netty.codec.NettyRpcEncoder;
 import com.zxy.rpc.tansmission.netty.handler.NettyRpcClientHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -16,8 +22,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.SneakyThrows;
@@ -59,8 +63,8 @@ public class NettyRpcClient implements RpcClient {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new StringDecoder());
-                        ch.pipeline().addLast(new StringEncoder());
+                        ch.pipeline().addLast(new NettyRpcDecoder());
+                        ch.pipeline().addLast(new NettyRpcEncoder());
                         ch.pipeline().addLast(new NettyRpcClientHandler());
                     }
                 });
@@ -73,11 +77,27 @@ public class NettyRpcClient implements RpcClient {
         UnprocessedRpcReq.put(rpcReq.getRequestId(), cf);
         // 1. 建立连接
         InetSocketAddress address = serviceDiscovery.lookupService(rpcReq);
-        ChannelFuture future = BOOTSTRAP.connect(address);
+        ChannelFuture connect = BOOTSTRAP.connect(address);
         // 2. 发送请求，等待响应
-        future.channel().writeAndFlush(JSON.toJSONString(rpcReq)).sync();
+        RpcMsg rpcMsg = RpcMsg.builder()
+                .version(VersionType.VERSION1)
+                .serializeType(SerializerType.KRYO)
+                .msgType(MsgType.RPC_REQ)
+                .data(rpcReq)
+                .compressType(CompressType.GZIP)
+                .build();
+        connect.addListener(future -> {
+            if (future.isSuccess()) {
+                log.info("连接成功");
+                connect.channel().writeAndFlush(rpcMsg);
+            } else {
+                log.error("连接失败");
+            }
+        });
+        RpcResp<?> rpcResp = cf.get();
+        log.debug("rpcResp: {}", rpcResp);
         // 3. 返回响应
-        return cf.get();
+        return rpcResp;
     }
 
     public static class UnprocessedRpcReq {
