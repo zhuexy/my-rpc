@@ -14,7 +14,9 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum SerializerType {
-    KRYO((byte) 0, "kryo");
+    KRYO((byte) 0, "kryo"),
+    JSON((byte) 1, "json"),
+    ;
 
     private final byte code;
     private final String desc;

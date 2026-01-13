@@ -9,6 +9,7 @@ import com.zxy.rpc.enums.SerializerType;
 import com.zxy.rpc.enums.VersionType;
 import com.zxy.rpc.handler.RpcReqHandler;
 import com.zxy.rpc.provider.ServiceProvider;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -31,21 +32,31 @@ public class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
         RpcReq rpcReq = (RpcReq) rpcMsg.getData();
         log.info("Received RPC request: {}", rpcReq);
         // 处理请求并生成响应
-        Object result = rpcReqHandler.invoke(rpcReq);
-        RpcResp<?> rpcResp = RpcResp.success(rpcReq.getRequestId(), result);
+        RpcResp<?> rpcResp = handleRpcReq(rpcReq);
         RpcMsg respRpcMsg = RpcMsg.builder()
+                .requestId(rpcMsg.getRequestId())
                 .version(VersionType.VERSION1)
                 .msgType(MsgType.RPC_RESP)
                 .serializeType(SerializerType.KRYO)
                 .compressType(CompressType.GZIP)
                 .data(rpcResp)
                 .build();
-        ctx.channel().writeAndFlush(respRpcMsg);
+        ctx.channel().writeAndFlush(respRpcMsg).addListener(ChannelFutureListener.CLOSE);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error("Exception caught in NettyRpcServerHandler", cause);
         ctx.close();
+    }
+
+    private RpcResp<?> handleRpcReq(RpcReq rpcReq) {
+        try {
+            Object result = rpcReqHandler.invoke(rpcReq);
+            return RpcResp.success(rpcReq.getRequestId(), result);
+        } catch (Exception e) {
+            log.error("远程调用出现异常", e);
+            return RpcResp.fail(rpcReq.getRequestId(), e.getMessage());
+        }
     }
 }

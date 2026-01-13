@@ -17,6 +17,7 @@ import com.zxy.rpc.tansmission.netty.codec.NettyRpcEncoder;
 import com.zxy.rpc.tansmission.netty.handler.NettyRpcClientHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -44,7 +45,7 @@ public class NettyRpcClient implements RpcClient {
 
     private static final Bootstrap BOOTSTRAP;
     private static final Integer DEFAULT_CONNECT_TIMEOUT = 5000;
-    private ServiceDiscovery serviceDiscovery;
+    private final ServiceDiscovery serviceDiscovery;
 
     public NettyRpcClient(ServiceDiscovery serviceDiscovery) {
         this.serviceDiscovery = serviceDiscovery;
@@ -89,7 +90,12 @@ public class NettyRpcClient implements RpcClient {
         connect.addListener(future -> {
             if (future.isSuccess()) {
                 log.info("连接成功");
-                connect.channel().writeAndFlush(rpcMsg);
+                connect.channel().writeAndFlush(rpcMsg).addListener((ChannelFutureListener) writeFuture -> {
+                    if (!writeFuture.isSuccess()) {
+                        writeFuture.channel().close();
+                        cf.completeExceptionally(writeFuture.cause());
+                    }
+                });
             } else {
                 log.error("连接失败");
             }

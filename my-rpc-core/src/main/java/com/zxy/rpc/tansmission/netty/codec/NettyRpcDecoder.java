@@ -28,7 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 public class NettyRpcDecoder extends LengthFieldBasedFrameDecoder {
     public NettyRpcDecoder() {
         /*
-         * @param maxFrameLength
+         *  解决粘包问题
+         *  @param maxFrameLength
          *        the maximum length of the frame.  If the length of the frame is
          *        greater than this value, {@link TooLongFrameException} will be
          *        thrown.
