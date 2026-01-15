@@ -47,7 +47,7 @@ public class SocketRpcServer implements RpcServer {
         this.port = port;
         this.serviceProvider = serviceProvider;
         this.rpcReqHandler = new RpcReqHandler(serviceProvider);
-        this.executor = ThreadPoolUtil.crateIoIntensiveThreadPool(DEFAULT_POOL_NAME);
+        this.executor = ThreadPoolUtil.createIoIntensiveThreadPool(DEFAULT_POOL_NAME);
     }
 
     @Override

@@ -78,9 +78,12 @@ public class NettyRpcDecoder extends LengthFieldBasedFrameDecoder {
 
         int reqId = byteBuf.readInt();
 
-        Object data = readData(byteBuf, msgType,
-                serializerType, compressType, fullLen - RpcConst.RPC_REQ_HEAD_LEN);
-        log.info("data: {}", data);
+        Object data = null;
+        if (!msgType.isHeartbeat()) {
+            data = readData(byteBuf, msgType,
+                    serializerType, compressType, fullLen - RpcConst.RPC_REQ_HEAD_LEN);
+            log.info("data: {}", data);
+        }
         return RpcMsg.builder()
                 .version(version)
                 .msgType(msgType)

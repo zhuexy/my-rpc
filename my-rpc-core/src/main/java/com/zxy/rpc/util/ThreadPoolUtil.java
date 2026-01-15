@@ -25,26 +25,26 @@ public final class ThreadPoolUtil {
     private static final long DEFAULT_KEEP_ALIVE_TIME = 60L;
     private static final int DEFAULT_BLOCKING_QUEUE_CAPACITY = 128;
 
-    public static ExecutorService crateCpuIntensiveThreadPool(String poolName) {
-        return crateThreadPool(CPU_INTENSIVE_THREAD_COUNT, poolName);
+    public static ExecutorService createCpuIntensiveThreadPool(String poolName) {
+        return createThreadPool(CPU_INTENSIVE_THREAD_COUNT, poolName);
     }
 
-    public static ExecutorService crateIoIntensiveThreadPool(String poolName) {
-        return crateThreadPool(IO_INTENSIVE_THREAD_COUNT, poolName);
+    public static ExecutorService createIoIntensiveThreadPool(String poolName) {
+        return createThreadPool(IO_INTENSIVE_THREAD_COUNT, poolName);
     }
 
-    public static ExecutorService crateThreadPool(int corePoolSize, String poolName) {
-        return crateThreadPool(corePoolSize, corePoolSize, poolName);
+    public static ExecutorService createThreadPool(int corePoolSize, String poolName) {
+        return createThreadPool(corePoolSize, corePoolSize, poolName);
     }
 
-    public static ExecutorService crateThreadPool(
+    public static ExecutorService createThreadPool(
             int corePoolSize,
             int maxPoolSize,
             String poolName) {
-        return crateThreadPool(corePoolSize, maxPoolSize, DEFAULT_KEEP_ALIVE_TIME, poolName, false);
+        return createThreadPool(corePoolSize, maxPoolSize, DEFAULT_KEEP_ALIVE_TIME, poolName, false);
     }
 
-    public static ExecutorService crateThreadPool(
+    public static ExecutorService createThreadPool(
             int corePoolSize,
             int maxPoolSize,
             long keepAliveTime,

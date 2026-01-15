@@ -16,7 +16,7 @@ import com.zxy.rpc.tansmission.netty.codec.NettyRpcDecoder;
 import com.zxy.rpc.tansmission.netty.codec.NettyRpcEncoder;
 import com.zxy.rpc.tansmission.netty.handler.NettyRpcClientHandler;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -25,6 +25,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,6 +33,7 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -64,6 +66,8 @@ public class NettyRpcClient implements RpcClient {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new IdleStateHandler(
+                                0, 5, 0, TimeUnit.SECONDS));
                         ch.pipeline().addLast(new NettyRpcDecoder());
                         ch.pipeline().addLast(new NettyRpcEncoder());
                         ch.pipeline().addLast(new NettyRpcClientHandler());
@@ -78,7 +82,7 @@ public class NettyRpcClient implements RpcClient {
         UnprocessedRpcReq.put(rpcReq.getRequestId(), cf);
         // 1. 建立连接
         InetSocketAddress address = serviceDiscovery.lookupService(rpcReq);
-        ChannelFuture connect = BOOTSTRAP.connect(address);
+        Channel channel = ChannelPool.get(address, () -> connect(address));
         // 2. 发送请求，等待响应
         RpcMsg rpcMsg = RpcMsg.builder()
                 .version(VersionType.VERSION1)
@@ -87,23 +91,28 @@ public class NettyRpcClient implements RpcClient {
                 .data(rpcReq)
                 .compressType(CompressType.GZIP)
                 .build();
-        connect.addListener(future -> {
-            if (future.isSuccess()) {
-                log.info("连接成功");
-                connect.channel().writeAndFlush(rpcMsg).addListener((ChannelFutureListener) writeFuture -> {
-                    if (!writeFuture.isSuccess()) {
-                        writeFuture.channel().close();
-                        cf.completeExceptionally(writeFuture.cause());
-                    }
-                });
-            } else {
-                log.error("连接失败");
+        log.info("netty rpc client连接到: {}", address);
+        channel.writeAndFlush(rpcMsg).addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+                future.channel().close();
+                cf.completeExceptionally(future.cause());
             }
         });
+        // 3. 返回响应
         RpcResp<?> rpcResp = cf.get();
         log.debug("rpcResp: {}", rpcResp);
-        // 3. 返回响应
         return rpcResp;
+    }
+
+    private Channel connect(InetSocketAddress address) {
+        try {
+            return BOOTSTRAP.connect(address)
+                    .sync()
+                    .channel();
+        } catch (InterruptedException e) {
+            log.error("连接到远程服务器失败", e);
+            throw new RuntimeException(e);
+        }
     }
 
     public static class UnprocessedRpcReq {

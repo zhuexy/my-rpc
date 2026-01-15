@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Main {
     public static void main(String[] args) {
-
         RpcServer server = new NettyRpcServer(RpcConst.SERVER_PORT);
         log.info("start server...");
         server.publishService(new RpcServiceConfig(new UserServiceImpl()));

@@ -12,6 +12,8 @@ import com.zxy.rpc.provider.ServiceProvider;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,25 +31,42 @@ public class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RpcMsg rpcMsg) throws Exception {
-        RpcReq rpcReq = (RpcReq) rpcMsg.getData();
-        log.info("Received RPC request: {}", rpcReq);
         // 处理请求并生成响应
-        RpcResp<?> rpcResp = handleRpcReq(rpcReq);
         RpcMsg respRpcMsg = RpcMsg.builder()
                 .requestId(rpcMsg.getRequestId())
                 .version(VersionType.VERSION1)
-                .msgType(MsgType.RPC_RESP)
                 .serializeType(SerializerType.KRYO)
                 .compressType(CompressType.GZIP)
-                .data(rpcResp)
                 .build();
-        ctx.channel().writeAndFlush(respRpcMsg).addListener(ChannelFutureListener.CLOSE);
+        if (rpcMsg.getMsgType().isHeartbeat()) {
+            respRpcMsg.setMsgType(MsgType.HEARTBEAT_RESP);
+            log.info("Received heartbeat from client: {}", rpcMsg);
+        } else {
+            respRpcMsg.setMsgType(MsgType.RPC_RESP);
+            RpcReq rpcReq = (RpcReq) rpcMsg.getData();
+            log.info("Received RPC request: {}", rpcReq);
+            RpcResp<?> rpcResp = handleRpcReq(rpcReq);
+            respRpcMsg.setData(rpcResp);
+        }
+        ctx.channel().writeAndFlush(respRpcMsg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error("Exception caught in NettyRpcServerHandler", cause);
         ctx.close();
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        boolean isNeedClose = evt instanceof IdleStateEvent
+                && ((IdleStateEvent) evt).state() == IdleState.READER_IDLE;
+        if (!isNeedClose) {
+            super.userEventTriggered(ctx, evt);
+            return;
+        }
+        log.info("heartbeat timeout, closing channel: {}", ctx.channel().remoteAddress());
+        ctx.channel().close();
     }
 
     private RpcResp<?> handleRpcReq(RpcReq rpcReq) {
