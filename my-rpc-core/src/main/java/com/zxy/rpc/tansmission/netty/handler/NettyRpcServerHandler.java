@@ -71,7 +71,7 @@ public class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
 
     private RpcResp<?> handleRpcReq(RpcReq rpcReq) {
         try {
-            Object result = rpcReqHandler.invoke(rpcReq);
+            Object result = rpcReqHandler.handle(rpcReq);
             return RpcResp.success(rpcReq.getRequestId(), result);
         } catch (Exception e) {
             log.error("远程调用出现异常", e);

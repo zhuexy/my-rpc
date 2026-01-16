@@ -2,6 +2,9 @@ package com.zxy.rpc.proxy;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson2.JSONObject;
+import com.zxy.rpc.annotation.Breaker;
+import com.zxy.rpc.breaker.CircuitBreaker;
+import com.zxy.rpc.breaker.CircuitBreakerManager;
 import com.zxy.rpc.config.RpcServiceConfig;
 import com.zxy.rpc.dto.RpcReq;
 import com.zxy.rpc.dto.RpcResp;
@@ -67,7 +70,23 @@ public class RpcClientProxy implements InvocationHandler {
                 .version(config.getVersion())
                 .group(config.getGroup())
                 .build();
-        RpcResp<?> resp = rpcClient.send(rpcReq);
+        Breaker breaker = method.getAnnotation(Breaker.class);
+        RpcResp<?> resp;
+        if (breaker == null) {
+            resp = rpcClient.send(rpcReq);
+        } else {
+            CircuitBreaker circuitBreaker = CircuitBreakerManager.get(rpcReq.rpcServiceName(), breaker);
+            if (!circuitBreaker.allowRequest()) {
+                log.error("请求被熔断: {}", rpcReq.rpcServiceName());
+                throw new RpcException("请求已被熔断处理");
+            }
+            resp = rpcClient.send(rpcReq);
+            if (Objects.equals(resp.getCode(), RpcRespStatus.SUCCESS.getCode())) {
+                circuitBreaker.success();
+            } else {
+                circuitBreaker.fail();
+            }
+        }
 
         check(rpcReq, resp);
         Object data = resp.getData();

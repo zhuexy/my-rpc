@@ -12,4 +12,11 @@
     <artifactId>test-api</artifactId>
     <packaging>jar</packaging>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.zxy</groupId>
+            <artifactId>my-rpc-core</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

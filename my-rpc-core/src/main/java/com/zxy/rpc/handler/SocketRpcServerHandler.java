@@ -31,7 +31,7 @@ public class SocketRpcServerHandler implements Runnable {
         log.info("invoke rpc service");
 
         // 调用服务
-        Object result = rpcReqHandler.invoke(req);
+        Object result = rpcReqHandler.handle(req);
 
         // 响应
         RpcResp<?> resp = RpcResp.success(req.getRequestId(), result);
