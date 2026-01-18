@@ -1,5 +1,6 @@
 package com.zxy.rpc.tansmission.netty;
 
+import com.zxy.rpc.config.RpcConfig;
 import com.zxy.rpc.dto.RpcMsg;
 import com.zxy.rpc.dto.RpcReq;
 import com.zxy.rpc.dto.RpcResp;
@@ -15,6 +16,7 @@ import com.zxy.rpc.tansmission.RpcClient;
 import com.zxy.rpc.tansmission.netty.codec.NettyRpcDecoder;
 import com.zxy.rpc.tansmission.netty.codec.NettyRpcEncoder;
 import com.zxy.rpc.tansmission.netty.handler.NettyRpcClientHandler;
+import com.zxy.rpc.util.RpcConfigUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -84,12 +86,13 @@ public class NettyRpcClient implements RpcClient {
         InetSocketAddress address = serviceDiscovery.lookupService(rpcReq);
         Channel channel = ChannelPool.get(address, () -> connect(address));
         // 2. 发送请求，等待响应
+        RpcConfig rpcConfig = RpcConfigUtils.getRpcConfig();
         RpcMsg rpcMsg = RpcMsg.builder()
                 .version(VersionType.VERSION1)
-                .serializeType(SerializerType.KRYO)
+                .serializeType(SerializerType.from(rpcConfig.getSerializer()))
                 .msgType(MsgType.RPC_REQ)
+                .compressType(CompressType.from(rpcConfig.getCompress()))
                 .data(rpcReq)
-                .compressType(CompressType.GZIP)
                 .build();
         log.info("netty rpc client连接到: {}", address);
         channel.writeAndFlush(rpcMsg).addListener((ChannelFutureListener) future -> {

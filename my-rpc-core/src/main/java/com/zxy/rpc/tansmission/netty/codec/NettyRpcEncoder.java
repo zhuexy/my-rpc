@@ -1,12 +1,10 @@
 package com.zxy.rpc.tansmission.netty.codec;
 
 import com.zxy.rpc.compress.Compress;
-import com.zxy.rpc.compress.impl.GzipCompress;
 import com.zxy.rpc.constant.RpcConst;
 import com.zxy.rpc.dto.RpcMsg;
-import com.zxy.rpc.factory.SingletonFactory;
 import com.zxy.rpc.serialize.Serializer;
-import com.zxy.rpc.serialize.impl.KryoSerializer;
+import com.zxy.rpc.spi.CustomLoader;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -52,13 +50,13 @@ public class NettyRpcEncoder extends MessageToByteEncoder<RpcMsg> {
     }
 
     private byte[] data2Bytes(RpcMsg rpcMsg) {
-        // TODO 根据序列化类型，压缩类型将数据转换称byte数组
+        // 根据序列化类型，压缩类型将数据转换称byte数组
+        CustomLoader<Serializer> serializerLoader = CustomLoader.getLoader(Serializer.class);
+        Serializer serializer = serializerLoader.get(rpcMsg.getSerializeType().getDesc());
+        byte[] serializedBytes = serializer.serialize(rpcMsg.getData());
 
-        // 暂时先用简单方法实现
-        Serializer serializer = SingletonFactory.getInstance(KryoSerializer.class);
-        byte[] bytes = serializer.serialize(rpcMsg.getData());
-        Compress compress = SingletonFactory.getInstance(GzipCompress.class);
-        return compress.compress(bytes);
-
+        CustomLoader<Compress> compressLoader = CustomLoader.getLoader(Compress.class);
+        Compress compress = compressLoader.get(rpcMsg.getCompressType().getDesc());
+        return compress.compress(serializedBytes);
     }
 }

@@ -24,4 +24,11 @@ public enum CompressType {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("code异常" + code));
     }
+
+    public static CompressType from(String desc) {
+        return Arrays.stream(values())
+                .filter(o -> o.getDesc().equalsIgnoreCase(desc))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("desc异常" + desc));
+    }
 }

@@ -1,5 +1,6 @@
 package com.zxy.rpc.tansmission.netty.handler;
 
+import com.zxy.rpc.config.RpcConfig;
 import com.zxy.rpc.dto.RpcMsg;
 import com.zxy.rpc.dto.RpcResp;
 import com.zxy.rpc.enums.CompressType;
@@ -7,6 +8,7 @@ import com.zxy.rpc.enums.MsgType;
 import com.zxy.rpc.enums.SerializerType;
 import com.zxy.rpc.enums.VersionType;
 import com.zxy.rpc.tansmission.netty.NettyRpcClient;
+import com.zxy.rpc.util.RpcConfigUtils;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -49,10 +51,11 @@ public class NettyRpcClientHandler extends SimpleChannelInboundHandler<RpcMsg> {
             return;
         }
         // 发送心跳消息
+        RpcConfig rpcConfig = RpcConfigUtils.getRpcConfig();
         RpcMsg rpcMsg = RpcMsg.builder()
                 .version(VersionType.VERSION1)
-                .serializeType(SerializerType.KRYO)
-                .compressType(CompressType.GZIP)
+                .serializeType(SerializerType.from(rpcConfig.getSerializer()))
+                .compressType(CompressType.from(rpcConfig.getCompress()))
                 .msgType(MsgType.HEARTBEAT_REQ)
                 .build();
         ctx.channel().writeAndFlush(rpcMsg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);

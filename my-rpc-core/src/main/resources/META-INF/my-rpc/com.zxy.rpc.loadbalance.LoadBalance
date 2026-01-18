@@ -1,0 +1,3 @@
+random=com.zxy.rpc.loadbalance.impl.RandomLoadBalance
+round=com.zxy.rpc.loadbalance.impl.RoundLoadBalance
+consistenthash=com.zxy.rpc.loadbalance.impl.ConsistentHashLoadBalance

@@ -1,0 +1,1 @@
+gzip=com.zxy.rpc.compress.impl.GzipCompress

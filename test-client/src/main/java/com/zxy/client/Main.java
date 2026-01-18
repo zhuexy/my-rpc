@@ -11,20 +11,6 @@ public class Main {
         // 使用动态代理，让调用远程服务和调用本地方法一样
         UserService userService = ProxyUtils.getProxy(UserService.class);
         ExecutorService executorService = ThreadPoolUtil.createThreadPool(20, "test-pool");
-        for (int i = 0; i < 6; i++) {
-            try {
-                System.out.println(userService.getUser(-1));
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-        }
-        Thread.sleep(11000);
-        for (int i = 0; i < 6; i++) {
-            try {
-                System.out.println(userService.getUser(1));
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-        }
+        System.out.println(userService.getUser(1));
     }
 }

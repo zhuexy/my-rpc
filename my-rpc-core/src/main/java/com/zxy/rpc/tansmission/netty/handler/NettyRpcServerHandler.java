@@ -3,10 +3,7 @@ package com.zxy.rpc.tansmission.netty.handler;
 import com.zxy.rpc.dto.RpcMsg;
 import com.zxy.rpc.dto.RpcReq;
 import com.zxy.rpc.dto.RpcResp;
-import com.zxy.rpc.enums.CompressType;
 import com.zxy.rpc.enums.MsgType;
-import com.zxy.rpc.enums.SerializerType;
-import com.zxy.rpc.enums.VersionType;
 import com.zxy.rpc.handler.RpcReqHandler;
 import com.zxy.rpc.provider.ServiceProvider;
 import io.netty.channel.ChannelFutureListener;
@@ -34,9 +31,9 @@ public class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcMsg> {
         // 处理请求并生成响应
         RpcMsg respRpcMsg = RpcMsg.builder()
                 .requestId(rpcMsg.getRequestId())
-                .version(VersionType.VERSION1)
-                .serializeType(SerializerType.KRYO)
-                .compressType(CompressType.GZIP)
+                .version(rpcMsg.getVersion())
+                .serializeType(rpcMsg.getSerializeType())
+                .compressType(rpcMsg.getCompressType())
                 .build();
         if (rpcMsg.getMsgType().isHeartbeat()) {
             respRpcMsg.setMsgType(MsgType.HEARTBEAT_RESP);

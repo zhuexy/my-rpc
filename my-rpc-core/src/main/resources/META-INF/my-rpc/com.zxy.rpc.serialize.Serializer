@@ -1,0 +1,4 @@
+kryo=com.zxy.rpc.serialize.impl.KryoSerializer
+json=com.zxy.rpc.serialize.impl.JSONSerializer
+hessian=com.zxy.rpc.serialize.impl.HessianSerializer
+protostuff=com.zxy.rpc.serialize.impl.ProtostuffSerializer

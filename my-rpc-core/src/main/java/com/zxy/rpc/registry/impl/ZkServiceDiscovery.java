@@ -2,14 +2,17 @@ package com.zxy.rpc.registry.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.zxy.rpc.config.RpcConfig;
 import com.zxy.rpc.constant.RpcConst;
 import com.zxy.rpc.dto.RpcReq;
+import com.zxy.rpc.enums.LoadBalanceType;
+import com.zxy.rpc.factory.LoadBalanceFactory;
 import com.zxy.rpc.factory.SingletonFactory;
 import com.zxy.rpc.loadbalance.LoadBalance;
-import com.zxy.rpc.loadbalance.impl.RandomLoadBalance;
 import com.zxy.rpc.registry.ServiceDiscovery;
 import com.zxy.rpc.registry.zk.ZkClient;
 import com.zxy.rpc.util.IPUtils;
+import com.zxy.rpc.util.RpcConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -26,7 +29,10 @@ public class ZkServiceDiscovery implements ServiceDiscovery {
     private final LoadBalance loadBalance;
 
     public ZkServiceDiscovery() {
-        this(SingletonFactory.getInstance(ZkClient.class), SingletonFactory.getInstance(RandomLoadBalance.class));
+        this.zkClient = SingletonFactory.getInstance(ZkClient.class);
+        RpcConfig rpcConfig = RpcConfigUtils.getRpcConfig();
+        LoadBalanceType type = LoadBalanceType.from(rpcConfig.getLoadBalance());
+        this.loadBalance = LoadBalanceFactory.get(type);
     }
 
     public ZkServiceDiscovery(ZkClient zkClient, LoadBalance loadBalance) {
@@ -42,7 +48,7 @@ public class ZkServiceDiscovery implements ServiceDiscovery {
         if (CollUtil.isEmpty(children)) {
             throw new RuntimeException("找不到对应的服务: " + rpcServiceName);
         }
-        String address = loadBalance.select(children);
+        String address = loadBalance.select(children, rpcReq);
         return IPUtils.toInetsocketAddress(address);
     }
 }
