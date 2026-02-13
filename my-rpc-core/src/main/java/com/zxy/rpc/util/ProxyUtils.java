@@ -13,10 +13,10 @@ public class ProxyUtils {
 
     private static final RpcClient RPC_CLIENT = SingletonFactory.getInstance(NettyRpcClient.class);
 
-    private static final RpcClientProxy PRC_CLIENT_PROXY = new RpcClientProxy(RPC_CLIENT);
+    private static final RpcClientProxy RPC_CLIENT_PROXY = new RpcClientProxy(RPC_CLIENT);
 
     public static <T> T getProxy(Class<T> clazz) {
-        return PRC_CLIENT_PROXY.getProxy(clazz);
+        return RPC_CLIENT_PROXY.getProxy(clazz);
     }
 
 }
