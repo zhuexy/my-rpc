@@ -32,6 +32,7 @@ public class CustomLoader<T> {
         this.type = type;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> CustomLoader<T> getLoader(Class<T> type) {
         if (type == null) {
             throw new IllegalArgumentException("Spi type is null");
@@ -81,6 +82,7 @@ public class CustomLoader<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @SneakyThrows
     private void handleLine(String line, ClassLoader classLoader) {
         line = line.trim();

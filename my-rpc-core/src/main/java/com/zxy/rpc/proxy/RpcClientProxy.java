@@ -29,7 +29,7 @@ public class RpcClientProxy implements InvocationHandler {
 
     private final RpcClient rpcClient;
 
-    private final RpcServiceConfig config;
+    private RpcServiceConfig config;
 
     public RpcClientProxy(RpcClient rpcClient) {
         this(rpcClient, new RpcServiceConfig());

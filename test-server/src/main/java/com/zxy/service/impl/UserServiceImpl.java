@@ -8,7 +8,7 @@ import com.zxy.rpc.annotation.RpcService;
  * @author zxy
  * @date 2025/12/27 16:27
  **/
-@RpcService
+@RpcService(version = "1", group = "test")
 public class UserServiceImpl implements UserService {
 
     @Override
