@@ -1,10 +1,12 @@
 package com.zxy.rpc.tansmission.netty.codec;
 
 import com.zxy.rpc.compress.Compress;
+import com.zxy.rpc.config.RpcConfig;
 import com.zxy.rpc.constant.RpcConst;
 import com.zxy.rpc.dto.RpcMsg;
 import com.zxy.rpc.serialize.Serializer;
 import com.zxy.rpc.spi.CustomLoader;
+import com.zxy.rpc.util.RpcConfigUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -52,11 +54,12 @@ public class NettyRpcEncoder extends MessageToByteEncoder<RpcMsg> {
     private byte[] data2Bytes(RpcMsg rpcMsg) {
         // 根据序列化类型，压缩类型将数据转换称byte数组
         CustomLoader<Serializer> serializerLoader = CustomLoader.getLoader(Serializer.class);
-        Serializer serializer = serializerLoader.get(rpcMsg.getSerializeType().getDesc());
+        RpcConfig rpcConfig = RpcConfigUtils.getRpcConfig();
+        Serializer serializer = serializerLoader.get(rpcConfig.getSerializer());
         byte[] serializedBytes = serializer.serialize(rpcMsg.getData());
 
         CustomLoader<Compress> compressLoader = CustomLoader.getLoader(Compress.class);
-        Compress compress = compressLoader.get(rpcMsg.getCompressType().getDesc());
+        Compress compress = compressLoader.get(rpcConfig.getCompress());
         return compress.compress(serializedBytes);
     }
 }

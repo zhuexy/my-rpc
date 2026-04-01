@@ -2,6 +2,7 @@ package com.zxy.rpc.tansmission.netty.codec;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.zxy.rpc.compress.Compress;
+import com.zxy.rpc.config.RpcConfig;
 import com.zxy.rpc.constant.RpcConst;
 import com.zxy.rpc.dto.RpcMsg;
 import com.zxy.rpc.dto.RpcReq;
@@ -13,6 +14,7 @@ import com.zxy.rpc.enums.VersionType;
 import com.zxy.rpc.exception.RpcException;
 import com.zxy.rpc.serialize.Serializer;
 import com.zxy.rpc.spi.CustomLoader;
+import com.zxy.rpc.util.RpcConfigUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
@@ -78,8 +80,7 @@ public class NettyRpcDecoder extends LengthFieldBasedFrameDecoder {
 
         Object data = null;
         if (!msgType.isHeartbeat()) {
-            data = readData(byteBuf, msgType,
-                    serializerType, compressType, fullLen - RpcConst.RPC_REQ_HEAD_LEN);
+            data = readData(byteBuf, msgType, fullLen - RpcConst.RPC_REQ_HEAD_LEN);
             log.info("data: {}", data);
         }
         return RpcMsg.builder()
@@ -92,29 +93,28 @@ public class NettyRpcDecoder extends LengthFieldBasedFrameDecoder {
                 .build();
     }
 
-    private Object readData(ByteBuf byteBuf, MsgType msgType,
-                            SerializerType serializerType, CompressType compressType, int dataLen) {
+    private Object readData(ByteBuf byteBuf, MsgType msgType, int dataLen) {
         if (dataLen <= 0) {
             return null;
         }
         if (msgType.isReq()) {
-            return readData(byteBuf, serializerType, compressType, dataLen, RpcReq.class);
+            return readData(byteBuf, dataLen, RpcReq.class);
         }
-        return readData(byteBuf, serializerType, compressType, dataLen, RpcResp.class);
+        return readData(byteBuf, dataLen, RpcResp.class);
     }
 
-    private <T> T readData(ByteBuf byteBuf, SerializerType serializerType,
-                           CompressType compressType, int dataLen, Class<T> clazz) {
+    private <T> T readData(ByteBuf byteBuf, int dataLen, Class<T> clazz) {
         byte[] dataBytes = new byte[dataLen];
         byteBuf.readBytes(dataBytes);
 
         // 根据压缩类型、序列化类型来解压、反序列化
+        RpcConfig rpcConfig = RpcConfigUtils.getRpcConfig();
         CustomLoader<Compress> compressLoader = CustomLoader.getLoader(Compress.class);
-        Compress compress = compressLoader.get(compressType.getDesc());
+        Compress compress = compressLoader.get(rpcConfig.getCompress());
         byte[] decompressedBytes = compress.decompress(dataBytes);
 
         CustomLoader<Serializer> serializerLoader = CustomLoader.getLoader(Serializer.class);
-        Serializer serializer = serializerLoader.get(serializerType.getDesc());
+        Serializer serializer = serializerLoader.get(rpcConfig.getSerializer());
         return serializer.deserialize(decompressedBytes, clazz);
     }
 }

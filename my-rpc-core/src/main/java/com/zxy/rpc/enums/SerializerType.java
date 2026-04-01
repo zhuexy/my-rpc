@@ -14,6 +14,7 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum SerializerType {
+    CUSTOM((byte) -1, "custom"),
     KRYO((byte) 0, "kryo"),
     JSON((byte) 1, "json"),
     HESSIAN((byte) 2, "hessian"),
@@ -26,13 +27,13 @@ public enum SerializerType {
         return Arrays.stream(values())
                 .filter(o -> o.getCode() == code)
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("code异常" + code));
+                .orElse(CUSTOM);
     }
 
     public static SerializerType from(String desc) {
         return Arrays.stream(values())
                 .filter(o -> o.getDesc().equalsIgnoreCase(desc))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("desc异常" + desc));
+                .orElse(CUSTOM);
     }
 }

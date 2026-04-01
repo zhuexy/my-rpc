@@ -96,6 +96,7 @@ public class CustomLoader<T> {
         String spiName = split[0].trim();
         String className = split[1].trim();
         Class<?> clazz = classLoader.loadClass(className);
+        // 若type不是clazz的父类或接口，则抛出异常
         if (!type.isAssignableFrom(clazz)) {
             throw new IllegalArgumentException("Class " + className + " does not implement " + type.getName());
         }
